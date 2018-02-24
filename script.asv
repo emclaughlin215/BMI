@@ -1,0 +1,31 @@
+clc
+clear all
+close all
+
+load monkeydata_training.mat
+
+numangles = 8;
+n_units = 5;
+
+% RasterFunct(trial, numangles, n_units)
+
+n_trials = 50;
+t_start = 300;
+t_end = 400;
+
+PSTH(trial, t_start, t_end, n_units, n_trials)
+
+for j = 1:8
+    
+    for i = 1:100
+        t = 1:length(trial(i,j).handPos(1,:));
+        plot3(t,trial(i,j).handPos(1,:),trial(i,j).handPos(2,:));
+        hold on
+    end
+
+end
+
+grid on
+xlabel('time')
+ylabel('x')
+zlabel('y')
