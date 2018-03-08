@@ -4,7 +4,6 @@ function [Param] = positionEstimatorTraining2(trial_train)
 
     K = size(trial,2);
     I = size(trial(1).rate,1);
-    B = size(trial(1).speed,2);
     
     N_particles = 500;
     
@@ -17,7 +16,7 @@ function [Param] = positionEstimatorTraining2(trial_train)
        for k=1:1:K
            Cloud{i}=[Cloud{i},[trial(k).speed(1,:);trial(k).speed(2,:);trial(k).rate(i,:)/exp(baseline(i,1))]];
        end
-       Cloud{i} = Cloud{i}(:,2:end)
+       Cloud{i} = Cloud{i}(:,2:end);
     end
         
     ft = fittype('exp(d1*x+d2*y+s*sqrt(x^2+y^2)','independent',{'x','y'},'dependent','height');
