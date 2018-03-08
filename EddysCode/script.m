@@ -34,7 +34,7 @@ for jj = 1:8
             for ii = 1:length(trial(i,jj).spikes(j,:))-1
                  trial1(i,jj).handvel(:,ii) = (trial(i,jj).handPos(:,ii+1) - trial(i,jj).handPos(:,ii));
             end
-            % uncomment this in to get acceleration
+% uncomment this in to get acceleration
 %             for ii = 1:length(trial(i,jj).spikes(j,:))-2
 %                  trial1(i,jj).handacc(:,ii) = (trial1(i,jj).handvel(:,ii+1) - trial1(i,jj).handvel(:,ii));
 %             end
