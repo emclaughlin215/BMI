@@ -1,7 +1,7 @@
 function [Param] = positionEstimatorTraining2(trial_train)
     %We call the filtering function to obtain the data
     trial = filtering_neurons(trial_train, 'FF');
-    
+    %trial = trial_train;
     %Some dimensions for loops
     K = size(trial,2);
     I = size(trial(1).rate,1);
@@ -25,7 +25,7 @@ function [Param] = positionEstimatorTraining2(trial_train)
     
     %Function fitting, see documentation. NB: we already divided by the
     %exponential of the baseline 
-    ft = fittype('exp(d1*x+d2*y+s*sqrt(x^2+y^2)','independent',{'x','y'},'dependent','height');
+    ft = fittype('exp(d1*x+d2*y+s*sqrt(x^2+y^2))','independent',{'x','y'},'dependent','height');
     options = fitoptions(ft);
     options.StartPoint = [1,1,1];
     for i=1:1:I
