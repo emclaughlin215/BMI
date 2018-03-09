@@ -30,32 +30,22 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
             %We calculate poisson parameter lambda for each neuron
             lambda = exp(Param_iter.baseline+Param_iter.direction*Param_iter.particles'+Param_iter.speed_sensitivity.*sqrt(Param_iter.particles(:,1).^2+Param_iter.particles(:,2).^2));
             
-            %Weights calculation (P(observation|state) for each particle)
+            %Weights calculation (
             weights = zeros(1,Param_iter.N_particles);
             for p=1:1;Param_iter.N_particles
                 weights(1,b) = prod(exp(-lambda(:,p)*20e-3)*(lambda(:,p)*20e-3).^counts(:,1)./factorial(counts(:,1)));
             end
-            %We resample particles according to the weights: "survival of
-            %the fittest"
             weights = weights/sum(weights);
-            Particles = randsample(Param_iter.particles,Param_iter.N_particles,True,weights); 
-            %We add system noise
+            Particles = randsample(Param_iter.particles,Param_iter.N_particles,True,weights);                                    
             Param_iter.particles = randn(Param_iter.N_particles,2)*speed_std + Particles;            
         end
-        %After all the iterations, the particle cloud has converged towards
-        %the "true" state (i.e. true speed)
         Speed_estimate = mean(Particles);
-        %We increment the estimated position
         decodedPosX = Param_iter.decodedPos(1,1) + Speed_estimate(1,1)*20e-3;
         decodedPosY = Param_iter.decodedPos(1,2) + Speed_estimate(1,2)*20e-3;
-        %We store parameters for new iteration while adding a -slightly
-        %bigger- system noise
         newParameters = Param_iter;
         newParameters.particles = randn(Param.N_particles,2)*speed_std2 + Particles;
         newParameters.decodedPos = [decodedPosX,decodedPosY];
     end
-    
-end
     
     
    
