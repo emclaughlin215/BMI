@@ -1,6 +1,6 @@
 function [Param] = positionEstimatorTraining2(trial_train)
     %We call the filtering function to obtain the data
-    trial = filtering_neurons(trial_train);
+    trial = filtering_neurons(trial_train, 'FF');
     
     %Some dimensions for loops
     K = size(trial,2);
