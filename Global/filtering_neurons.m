@@ -1,5 +1,5 @@
 
-function out = filtering_neurons(trial, type)
+function filtered_trial = filtering_neurons(trial, type)
 % It filters the neurons that we want to use for our analysis.
 % We decide if we take into account the neuron or not based on if their firing
 % rate is higher compared to the baseline firing rate (before movement).
@@ -7,30 +7,30 @@ function out = filtering_neurons(trial, type)
 %       trial: A structure that contains the data (100 trials across 8 angles
 %       type: A string that can be the type of filtering we want to do (FF, Partial)
 % Output:
-%        out: A structure that contains baseline, rate and speed (divided into bins) for each orientation. 
+%       filtered_trial: A structure that contains baseline, rate and speed (divided into bins) for each orientation. 
 
     neural_data = getNeuronData(trial);
-    baseline = neural_data(1,1).baseline;
+    baseline = neural_data{1}.baseline;
     
     num_angles = size(trial,2); % number angles
     num_trials = size(trial,1); % number trials
 
-    t_movement = 300; % ms
-    total_time = 500; % ms
     for i = 1:size(baseline,1) % neuron
-        for k = 1:size(baseline,2) % orientation
-            t_start_movement = ceil(size(trial(i,k).spikes,2)/total_time*t_movement + 1);
-            spikes_movement = trial(i,k).spikes(:,t_start_movement:end); % across all trials
-            rate_movement_orients(i, k) = mean(mean(spikes_movement)); % average firing rate for the movement phase for each neuron across all trials
-            var_neuron_orient(k) = mean(var(spikes_movement')); % variance across trials for each orientation
+        rate_movement_orients = [];
+        for k = 1:num_angles % orientation
+            % Average firing rate for the movement phase for this neuron across all trials
+            rate_movement_orients(k,:) = neural_data{k}.PSTH(i,:);
         end
 
-        % Average variance across all orientations and across all trials for each neural unit
-        var_movement_neuron(i,1) = mean(var_neuron_orient);
+        % Variance of firing rate for this neuron across all orientations
+        var_neuron_orient(i,:) = var(rate_movement_orients);
         
-        % Average firing rate across all directions and across all trials for each neural unit
+        % Average variance across all orientations and across all trials for this neural unit
+        var_movement_neuron(i,1) = mean(var_neuron_orient(i,:));
+        
+        % Average firing rate across all directions and across all trials for this neural unit
         avg_baseline_neuron(i,1) = mean(baseline(i,:)); % 0 - 300ms
-        avg_movement_neuron(i,1) = mean(rate_movement_orients(i,:)); % 300 - 500ms
+        avg_movement_neuron(i,1) = mean(mean(rate_movement_orients)); % 300 - 500ms
 
         % Different measures
         FF(i,1) = var_movement_neuron(i)/avg_baseline_neuron(i);
@@ -38,54 +38,38 @@ function out = filtering_neurons(trial, type)
     end
     
     % Decide if we want to get rid of the neuron
-    for neuron = 1:size(baseline,1)
-        switch type
-            case 'FF'
-                if FF(neuron) < 3 % we get rid of neuron
+    switch type
+        case 'FF'
+            outliers_idx = isoutlier(FF);
+            for neuron = 1:length(outliers_idx)
+                if outliers_idx(neuron) == 1 && outliers_idx(neuron) < mean(FF)
                     bool_neurons(neuron,1) = 0; % we remove
                 else
                     bool_neurons(neuron,1) = 1; % we keep
                 end
-        end
+            end
+        case 'firing_rate'
+            for neuron = 1:size(baseline,1)
+                if firing_rate_ratio(neuron) < 0 % we get rid of neuron
+                    bool_neurons(neuron,1) = 0; % we remove
+                else
+                    bool_neurons(neuron,1) = 1; % we keep
+                end
+            end
     end
     bool_neurons = logical(bool_neurons);
     
     % Remove rate and baseline of this neuron for all
     % orientations and all trials
     for k = 1:num_angles
-        for n = 1:num_trials
-            neural_data(n,k).PSTH(~bool_neurons,:) = [];
-        end
+        neural_data{k}.PSTH(~bool_neurons,:) = [];
     end
-    avg_baseline_neuron(~bool_neurons,:) = [];
-
-    % Find the longest velocity
-    % Initialize
-    for k = 1:num_angles
-        max_length_vel(k) = -inf;
-        for n = 1:num_trials
-            if length(neural_data(n,k).handvel(1,:)) > max_length_vel(k)
-                max_length_vel(k) = length(neural_data(n,k).handvel(1,:));
-            end
-        end
-    end
-            
-    % Average speed across all trials for each direction
-    for k = 1:num_angles
-        v_x = NaN(num_trials,max_length_vel(k));
-        v_y = NaN(num_trials,max_length_vel(k));
-        for n = 1:num_trials
-            current_length = length(neural_data(n,k).handvel(1,:));
-            v_x(n,1:current_length) = neural_data(n,k).handvel(1,:);
-            v_y(n,1:current_length) = neural_data(n,k).handvel(2,:);             
-        end
-        avg_velocity{k} = [nanmean(v_x); nanmean(v_y)];
-    end
+    avg_baseline_neuron(~bool_neurons,:) = [];    
     
     % Average PSTH across all trials for each direction for each neuron
-    % All PSTH same for each iteration???
     for k = 1:num_angles
-        rate{k} = neural_data(1,k).PSTH;
+        rate{k} = neural_data{k}.PSTH;
+        avg_velocity{k} = neural_data{k}.handVel;
     end
     
     bins = 5; % number of divisions we want
@@ -93,10 +77,10 @@ function out = filtering_neurons(trial, type)
  
     % Output
     for k = 1:size(baseline,2)
-        out(k).baseline = avg_baseline_neuron;
-        out(k).rate = rate_split{k};
-        out(k).speed = velocity_split{k};
-        out(k).bool_neurons = bool_neurons;
+        filtered_trial(k).baseline = avg_baseline_neuron;
+        filtered_trial(k).rate = rate_split{k};
+        filtered_trial(k).speed = velocity_split{k};
+        filtered_trial(k).bool_neurons = bool_neurons;
     end
 end
 
@@ -144,6 +128,7 @@ function neural_data = getNeuronData(trial)
 % Output:
 %       neural_data: A structure that contains the PSTH, hand position
 %                    and hand velocity for each trial for each direction.
+
     numangles = 8; % select number of angles to consider
     
     %% Baseline
@@ -172,10 +157,9 @@ function neural_data = getNeuronData(trial)
     neural_data = handVelocity(trial, spikedens, baseline_spikedens, numangles, params_baseline);
 end
 
-%% Hand velocity function
-
 function neural_data = handVelocity(trial, spikedens, baseline_spikedens, numangles, params)
-% This calculates the hand velocity.
+% This calculates the hand velocity and hand position averaged across all
+% trials for each orientation.
 % Input:
 %       trial: A structure that contains the data (100 trials across 8 angles)
 %       spikedens: For each neural unit, we return the average spike rate
@@ -186,33 +170,55 @@ function neural_data = handVelocity(trial, spikedens, baseline_spikedens, numang
 %       params: A structure containing the baseline parameters: number of trials,
 %               number of units, start and end time, and the direction.
 % Output:
-%       neural_data: A structure that contains the PSTH, hand position
-%                    and hand velocity for each trial for each direction.
+%       neural_data: A structure that contains the PSTH, baseline, hand position
+%                    and hand velocity across all trials for each direction.
     
+    % Find the longest handPos for each orientation
     for k = 1:numangles
-        for i = 1:params.n_units
-            for n = 1:params.n_trials
-                %create a new structure 'trial1' which returns the same
-                %structure as 'trial' with PSTH-baseline, spiketrial -
-                %baseline, handPos, handVel.
-                neural_data(n,k).PSTH(i,:) = spikedens{i}(k,:) - baseline_spikedens(i,k);
-                %neural_data(n,k).spikes(i,:) = trial(n,k).spikes(i,:) - baseline_spikedens(i,k);
-                neural_data(n,k).handPos(:,:) = trial(n,k).handPos(:,:);
-                neural_data(n,k).baseline = baseline_spikedens;
-                for t = 1:length(trial(n,k).spikes(i,:))-1
-                     neural_data(n,k).handvel(:,t) = (trial(n,k).handPos(:,t+1) - trial(n,k).handPos(:,t));
-                end
-                
-                % uncomment this in to get acceleration
-%                 for t = 1:length(trial(n,k).spikes(i,:))-2
-%                      neural_data(n,k).handacc(:,t) = (neural_data(n,k).handvel(:,t+1) - neural_data(n,k).handvel(:,t));
-%                 end
+        max_length_pos(k) = -inf; % initialize
+        for n = 1:params.n_trials
+            if length(trial(n,k).handPos(1,:)) > max_length_pos(k)
+                max_length_pos(k) = length(trial(n,k).handPos(1,:));
             end
         end
     end
+    
+    % Average handPos and handVel across all trials
+    for k = 1:numangles
+        % Position
+        handPos_x = NaN(params.n_trials,max_length_pos(k));
+        handPos_y = NaN(params.n_trials,max_length_pos(k));
+        handPos_z = NaN(params.n_trials,max_length_pos(k));
+        % Velocity
+        handVel_x = NaN(params.n_trials,max_length_pos(k)-1);
+        handVel_y = NaN(params.n_trials,max_length_pos(k)-1);
+        handVel_z = NaN(params.n_trials,max_length_pos(k)-1);
+        for n = 1:params.n_trials
+            current_length = length(trial(n,k).handPos(1,:));
+            handVel = diff(trial(n,k).handPos,1,2); % obtain hand velocity
+            
+            handPos_x(n,1:current_length) = trial(n,k).handPos(1,:);
+            handPos_y(n,1:current_length) = trial(n,k).handPos(2,:);
+            handPos_z(n,1:current_length) = trial(n,k).handPos(3,:);
+            
+            handVel_x(n,1:current_length-1) = handVel(1,:);
+            handVel_y(n,1:current_length-1) = handVel(2,:);
+            handVel_z(n,1:current_length-1) = handVel(3,:);
+        end
+        neural_data{k}.handPos = [nanmean(handPos_x); nanmean(handPos_y); nanmean(handPos_z)];
+        neural_data{k}.handVel = [nanmean(handVel_x); nanmean(handVel_y); nanmean(handVel_z)];
+    end
+    
+    for k = 1:numangles
+        for i = 1:params.n_units
+            neural_data{k}.PSTH(i,:) = spikedens{i}(k,:) - baseline_spikedens(i,k);
+            % Remove negative values and set to 0
+            %idx = find(neural_data{k}.PSTH(i,:) < 0);
+            %neural_data{k}.PSTH(i,idx) = 0;
+        end
+        neural_data{k}.baseline = baseline_spikedens;
+    end
 end
-
-%% PSTH function
 
 function spikedens = PSTH(trial, params)
 % This calculates the Peristimulus time histogram. This is the histograms
@@ -248,8 +254,6 @@ function spikedens = PSTH(trial, params)
     end
     
 end
-
-%% Baseline function
 
 function baseline_spikedens = baseLine(trial, params)
 % This function calculates the baseline (0-300ms of the monkey's non-movement).
