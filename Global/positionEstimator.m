@@ -1,8 +1,8 @@
 function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Param)
     %Parameters
-    N_iterations = 10;
-    speed_std = 0.1 ;
-    speed_std2 = 0.3 ;
+    N_iterations = 1;
+    speed_std = 0.05 ;
+    speed_std2 = 0.1 ;
     t_bin = 20;
     t_planning = 320;
     if Param.isfirst
@@ -31,6 +31,7 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
             counts = sum(trial.spikes(:,end-t_bin:end),2);
             %We calculate poisson parameter lambda for each neuron
             lambda = exp(Param_iter.baseline+Param_iter.direction*Param_iter.particles'+Param_iter.speed_sensitivity*sqrt(Param_iter.particles(:,1).^2+Param_iter.particles(:,2).^2)');
+            %lambda = (Param_iter.baseline+Param_iter.direction*Param_iter.particles'+Param_iter.speed_sensitivity*sqrt(Param_iter.particles(:,1).^2+Param_iter.particles(:,2).^2)');
             
             %Weights calculation (P(observation|state) for each particle)
             weights = zeros(1,Param_iter.N_particles);

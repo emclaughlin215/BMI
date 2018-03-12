@@ -29,7 +29,7 @@ axis square
 grid
 
 % Train Model
-modelParameters = positionEstimatorTraining2(trainingData);
+modelParameters = positionEstimatorTraining3(trainingData);
 decodedPosX = 0;
 decodedPosY = 0;
 
@@ -38,6 +38,8 @@ for tr=1:size(testData,1)
     pause(0.001)
     for direc=randperm(8) 
         decodedHandPos = [];
+        modelParameters.decodedPos = [0,0];
+        modelParameters.isfirst = 1;
 
         times=320:20:size(testData(tr,direc).spikes,2);
         
