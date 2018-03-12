@@ -18,7 +18,7 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
         decodedPosX = 0;
         decodedPosY = 0;
         newParameters = Param;
-        newParameters.particles = planned_speed + randn(Param.N_particles,2)*speed_std2;
+        newParameters.Particles = planned_speed + randn(Param.N_particles,2)*speed_std2;
         %We move on to next steps with movement
         newParameters.isfirst = 0;
     else

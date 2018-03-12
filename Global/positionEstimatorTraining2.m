@@ -18,7 +18,8 @@ function [Param] = positionEstimatorTraining2(trial_train)
     for i=1:1:I
        Cloud{i}=[0;0;0];
        for k=1:1:K
-           Cloud{i}=[Cloud{i},[trial(k).speed(1,:);trial(k).speed(2,:);trial(k).rate(i,:)/exp(baseline(i,1))]];
+%            Cloud{i}=[Cloud{i},[trial(k).speed(1,:);trial(k).speed(2,:);trial(k).rate(i,:)/exp(baseline(i,1))]];
+            Cloud{i}=[Cloud{i},[trial(k).speed(1,:);trial(k).speed(2,:);(trial(k).rate(i,:)+baseline(i,1))/exp(baseline(i,1))]];
        end
        Cloud{i} = Cloud{i}(:,2:end);
     end
