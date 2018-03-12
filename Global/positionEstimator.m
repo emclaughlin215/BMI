@@ -1,10 +1,19 @@
 function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Param)
-    %Parameters
+    %Parameters    
     N_iterations = 1;
     speed_std = 0.05 ;
     speed_std2 = 0.1 ;
     t_bin = 20;
     t_planning = 320;
+    
+    %Neuron filtering
+    N = size(trial,1);
+    K = size(trial,2);
+    for n=1:1:N
+       for k=1:1:K
+          trial(n,k).spikes = trial(n,k).spikes(Param.bool_neurons,:); 
+       end
+    end
     if Param.isfirst
         %For first estimate we use poplation vector as the expected value
         %for a Gaussian repartition of particles
