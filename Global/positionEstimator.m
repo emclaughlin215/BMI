@@ -1,8 +1,9 @@
 function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Param)
     %Parameters    
-    N_iterations = 10;
-    speed_std = 0.05 ;
-    speed_std2 = 0.1 ;
+
+    N_iterations = 1;
+    speed_std = 0.01 ;
+    speed_std2 = 0.05 ;
     t_bin = 20;
     t_planning = 320;
     
@@ -14,6 +15,7 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
           trial(n,k).spikes = trial(n,k).spikes(Param.bool_neurons,:); 
        end
     end
+    
     if Param.isfirst
         %For first estimate we use poplation vector as the expected value
         %for a Gaussian repartition of particles
@@ -21,7 +23,7 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
         
         %We obtain the rates and normalized directions, and make a weighted
         %sum of the latter 
-        rates = sum(trial.spikes(:,:),2)/t_planning;%-Param.baseline;
+        rates = sum(trial.spikes(:,:),2)/t_planning-Param.baseline;
         directions_norm = sqrt(Param.direction(:,1).^2+Param.direction(:,2).^2);
         planned_speed = first_speed_norm*rates'*(Param.direction(:,:)./directions_norm);
         
@@ -40,11 +42,10 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
             counts = sum(trial.spikes(:,end-t_bin:end),2);
             %We calculate poisson parameter lambda for each neuron
             lambda = exp(Param_iter.baseline+Param_iter.direction*Param_iter.particles'+Param_iter.speed_sensitivity*sqrt(Param_iter.particles(:,1).^2+Param_iter.particles(:,2).^2)');
-            %lambda = (Param_iter.baseline+Param_iter.direction*Param_iter.particles'+Param_iter.speed_sensitivity*sqrt(Param_iter.particles(:,1).^2+Param_iter.particles(:,2).^2)');
             
             %Weights calculation (P(observation|state) for each particle)
             weights = zeros(1,Param_iter.N_particles);
-            for p=1:1;Param_iter.N_particles
+            for p=1:1:Param_iter.N_particles
                 weights(1,p) = prod(exp(-lambda(:,p)*t_bin).*(lambda(:,p)*t_bin).^counts(:,1)./factorial(counts(:,1)));
             end
             %We resample particles according to the weights: "survival of
@@ -55,16 +56,7 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
             % However, should it not be 300 particles whose duplication frequency is determined
             % by the relative weights of Param_iter.particles?? !!!
             Particles = datasample(Param_iter.particles,Param_iter.N_particles,1,'Replace',true,'Weights',weights); 
-            
-            %This plot helps to show whats happening.
-            figure(10)
-            plot(Param_iter.particles(:,1),Param_iter.particles(:,2), 'ro')
-            hold on
-            plot(Particles(:,1),Particles(:,2), 'bo')
-            hold off
-            axis([-1 1 -1 1])
-            pause
-            
+
             %We add system noise
             %!!! This should be "noise + spread of particles", but it is
             %currently "noise + one random particle in the cluster" !!!
