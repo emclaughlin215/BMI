@@ -1,6 +1,6 @@
 function [decodedPosX, decodedPosY, newParameters] = positionEstimator4(trial, Param)
     %Parameters    
-    N_iterations = 10;
+    N_iterations = 3;
     speed_std = 0.1 ;
     speed_std2 = 0.3 ;
     t_bin = 20;
@@ -53,16 +53,17 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator4(trial, P
             % !!!!! This return a 300x2 matrix of the same point 300 times.
             % However, should it not be 300 particles whose duplication frequency is determined
             % by the relative weights of Param_iter.particles?? !!!
-            Particles = datasample(Param_iter.particles,Param_iter.N_particles,1,'Replace',true,'Weights',weights); 
+            PartIdx = randsample(1:length(Param_iter.particles),Param_iter.N_particles,true,weights);
+            Particles = Param_iter.particles(PartIdx,:);
             
             %This plot helps to show whats happening.
-            figure(10)
-            plot(Param_iter.particles(:,1),Param_iter.particles(:,2), 'ro')
-            hold on
-            plot(Particles(:,1),Particles(:,2), 'bo')
-            hold off
-            axis([-1 1 -1 1])
-            pause
+%             figure(10)
+%             plot(Param_iter.particles(:,1),Param_iter.particles(:,2), 'ro')
+%             hold on
+%             plot(Particles(:,1),Particles(:,2), 'bo')
+%             hold off
+%             axis([-1 1 -1 1])
+%             pause(0.1)
             
             %We add system noise
             %!!! This should be "noise + spread of particles", but it is
