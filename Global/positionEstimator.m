@@ -3,6 +3,8 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
     N_iterations = 10;
     speed_std = 0.1 ;
     speed_std2 = 0.3 ;
+    t_bin = 20;
+    t_planning = 320;
     if Param.isfirst
         %For first estimate we use poplation vector as the expected value
         %for a Gaussian repartition of particles
@@ -10,7 +12,7 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
         
         %We obtain the rates and normalized directions, and make a weighted
         %sum of the latter 
-        rates = sum(trial.spikes(:,:),2)/320e-3;%-Param.baseline;
+        rates = sum(trial.spikes(:,:),2)/t_planning;%-Param.baseline;
         directions_norm = sqrt(Param.direction(:,1).^2+Param.direction(:,2).^2);
         planned_speed = first_speed_norm*rates'*(Param.direction(:,:)./directions_norm);
         
@@ -26,14 +28,14 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
         Param_iter = Param;
         for iterations=1:1:N_iterations
             %We compute counts (observation)
-            counts = sum(trial.spikes(:,end-20:end),2);
+            counts = sum(trial.spikes(:,end-t_bin:end),2);
             %We calculate poisson parameter lambda for each neuron
             lambda = exp(Param_iter.baseline+Param_iter.direction*Param_iter.particles'+Param_iter.speed_sensitivity*sqrt(Param_iter.particles(:,1).^2+Param_iter.particles(:,2).^2)');
             
             %Weights calculation (P(observation|state) for each particle)
             weights = zeros(1,Param_iter.N_particles);
             for p=1:1;Param_iter.N_particles
-                weights(1,p) = prod(exp(-lambda(:,p)*20e-3).*(lambda(:,p)*20e-3).^counts(:,1)./factorial(counts(:,1)));
+                weights(1,p) = prod(exp(-lambda(:,p)*t_bin).*(lambda(:,p)*t_bin).^counts(:,1)./factorial(counts(:,1)));
             end
             %We resample particles according to the weights: "survival of
             %the fittest"
@@ -46,8 +48,8 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
         %the "true" state (i.e. true speed)
         Speed_estimate = mean(Particles);
         %We increment the estimated position
-        decodedPosX = Param_iter.decodedPos(1,1) + Speed_estimate(1,1)*20e-3;
-        decodedPosY = Param_iter.decodedPos(1,2) + Speed_estimate(1,2)*20e-3;
+        decodedPosX = Param_iter.decodedPos(1,1) + Speed_estimate(1,1)*t_bin;
+        decodedPosY = Param_iter.decodedPos(1,2) + Speed_estimate(1,2)*t_bin;
         %We store parameters for new iteration while adding a -slightly
         %bigger- system noise
         newParameters = Param_iter;
