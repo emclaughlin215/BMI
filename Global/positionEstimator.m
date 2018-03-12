@@ -1,6 +1,6 @@
 function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Param)
     %Parameters    
-    N_iterations = 1;
+    N_iterations = 10;
     speed_std = 0.05 ;
     speed_std2 = 0.1 ;
     t_bin = 20;
@@ -50,8 +50,24 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
             %We resample particles according to the weights: "survival of
             %the fittest"
             weights = weights/sum(weights);
+            
+            % !!!!! This return a 300x2 matrix of the same point 300 times.
+            % However, should it not be 300 particles whose duplication frequency is determined
+            % by the relative weights of Param_iter.particles?? !!!
             Particles = datasample(Param_iter.particles,Param_iter.N_particles,1,'Replace',true,'Weights',weights); 
+            
+            %This plot helps to show whats happening.
+            figure(10)
+            plot(Param_iter.particles(:,1),Param_iter.particles(:,2), 'ro')
+            hold on
+            plot(Particles(:,1),Particles(:,2), 'bo')
+            hold off
+            axis([-1 1 -1 1])
+            pause
+            
             %We add system noise
+            %!!! This should be "noise + spread of particles", but it is
+            %currently "noise + one random particle in the cluster" !!!
             Param_iter.particles = randn(Param_iter.N_particles,2)*speed_std + Particles;            
         end
         %After all the iterations, the particle cloud has converged towards

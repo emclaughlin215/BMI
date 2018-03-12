@@ -7,7 +7,7 @@ function [Param] = positionEstimatorTraining3(trial_train)
     I = size(trial(1).rate,1);
     
     %Particle filtering parameters
-    N_particles = 500;
+    N_particles = 300;
     
     %Returned values initialization
     direction = zeros(I,2);
