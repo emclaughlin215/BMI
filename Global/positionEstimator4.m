@@ -1,8 +1,8 @@
-function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Param)
+function [decodedPosX, decodedPosY, newParameters] = positionEstimator4(trial, Param)
     %Parameters    
-    N_iterations = 1;
-    speed_std = 0.01 ;
-    speed_std2 = 0.05 ;
+    N_iterations = 10;
+    speed_std = 0.1 ;
+    speed_std2 = 0.3 ;
     t_bin = 20;
     t_planning = 320;
     
@@ -40,8 +40,7 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
             %We compute counts (observation)
             counts = sum(trial.spikes(:,end-t_bin:end),2);
             %We calculate poisson parameter lambda for each neuron
-            lambda = exp(Param_iter.baseline+Param_iter.direction*Param_iter.particles'+Param_iter.speed_sensitivity*sqrt(Param_iter.particles(:,1).^2+Param_iter.particles(:,2).^2)');
-            
+            lambda = max(0,Param_iter.baseline(:,1)+Param_iter.direction*Param_iter.particles');            
             %Weights calculation (P(observation|state) for each particle)
             weights = zeros(1,Param_iter.N_particles);
             for p=1:1:Param_iter.N_particles
@@ -50,7 +49,7 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
             %We resample particles according to the weights: "survival of
             %the fittest"
             weights = weights/sum(weights);
-            Particles = datasample(Param_iter.particles,Param_iter.N_particles,1,'Replace',true,'Weights',weights'); 
+            Particles = datasample(Param_iter.particles,Param_iter.N_particles,1,'Replace',true,'Weights',weights); 
             %We add system noise
             Param_iter.particles = randn(Param_iter.N_particles,2)*speed_std + Particles;            
         end
