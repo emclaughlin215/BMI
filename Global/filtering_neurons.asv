@@ -58,7 +58,7 @@ function filtered_trial = filtering_neurons(trial, type)
             end
         case 'None'
             for neuron = 1:size(baseline,1)
-               bool_neurons(neuron,1) = 1; 
+               bool 
             end
     end
     bool_neurons = logical(bool_neurons);

@@ -1,6 +1,6 @@
 function [decodedPosX, decodedPosY, newParameters] = positionEstimator5(trial, Param)
     %Parameters    
-    N_iterations = 5;
+    N_iterations = 15;
     speed_std = 0.1 ;
     speed_std2 = 0.5 ;
     t_bin = 20;
@@ -58,14 +58,15 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator5(trial, P
             Particles = Param_iter.particles(PartIdx,:);
             
             %This plot helps to show whats happening.
-%             figure(10)
-%             plot(Param_iter.particles(:,1),Param_iter.particles(:,2), 'ro')
-%             hold on
-%             plot(Particles(:,1),Particles(:,2), 'bo')
-%             hold off
-%             axis([-1 1 -1 1])
-%             pause(0.1)
-%             
+            f3 = figure(3);
+            f3.Name = 'Speed particles population';
+            plot(Param_iter.particles(:,1),Param_iter.particles(:,2), 'ro')
+            hold on
+            plot(Particles(:,1),Particles(:,2), 'bo')
+            hold off
+            axis([-1 1 -1 1])
+            pause(0.1)
+            
             %We add system noise
             %!!! This should be "noise + spread of particles", but it is
             %currently "noise + one random particle in the cluster" !!!

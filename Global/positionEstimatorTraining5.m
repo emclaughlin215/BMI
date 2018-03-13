@@ -1,6 +1,6 @@
 function [Param] = positionEstimatorTraining5(trial_train)
     %We call the filtering function to obtain the data
-    trial = filtering_neurons(trial_train, 'firing_rate');
+    trial = filtering_neurons(trial_train, 'None');
  
     %Some dimensions for loops
     K = size(trial,2);
@@ -18,7 +18,7 @@ function [Param] = positionEstimatorTraining5(trial_train)
     end
     
     %Particle filtering parameters
-    N_particles = 500;
+    N_particles = 1000;
     
     %Returned values initialization
     direction = zeros(I,2);
@@ -40,7 +40,7 @@ function [Param] = positionEstimatorTraining5(trial_train)
     options.StartPoint = [0.1,0];
     for i=1:1:I
         pref_fit{i} = fit(Cloud{i}(1,:)',Cloud{i}(3,:)',ft,options);
-        direction(i,:) = [cos(pref_fit{i}.b),sin(pref_fit{i}.b)];
+        direction(i,:) = [cos(-pref_fit{i}.b),sin(-pref_fit{i}.b)];
         direction_sensitivity(i) = exp(pref_fit{i}.a);
         speed_sensitivity(i,1) = pinv(Cloud{i}(2,:)')*Cloud{i}(3,:)';
     end
@@ -57,26 +57,28 @@ function [Param] = positionEstimatorTraining5(trial_train)
     Param.bool_neurons = trial(1).bool_neurons(:,1);
     
     %Plot
-%     subplot(2,2,1)
-%     plot(1:1:sum(Param.bool_neurons),Param.baseline)
-%     xlabel('Neuron id')
-%     ylabel('Baseline (kHz)')
-%     title('Baselines')
-%     subplot(2,2,2)
-%     plot(1:1:sum(Param.bool_neurons),Param.direction_sensitivity)
-%     xlabel('Neuron id')
-%     ylabel('Direction sensitivity (kHz)')
-%     title('Direction sensitivity')
-%     subplot(2,2,3)
-%     plot(1:1:sum(Param.bool_neurons),Param.speed_sensitivity)
-%     xlabel('Neuron id')
-%     ylabel('Speed sensitivity (kHz.ms/m)')
-%     title('Speed_sensitivity')
-%     subplot(2,2,4)
-%     plot(Param.direction(:,1),Param.direction(:,2),'o')
-%     xlabel('X axis')
-%     ylabel('Y axis')
-%     title('Preferred direction')    
-%     
+    f2 = figure(2);
+    f2.Name = 'Neurons characteristics';
+    subplot(2,2,1)
+    histogram(Param.baseline)
+    ylabel('Neuron count')
+    xlabel('Baseline (kHz)')
+    title('Baselines')
+    subplot(2,2,2)
+    histogram(Param.direction_sensitivity)
+    ylabel('Neuron count')
+    xlabel('Direction sensitivity (kHz)')
+    title('Direction sensitivity')
+    subplot(2,2,3)
+    histogram(Param.speed_sensitivity)
+    ylabel('Neuron count')
+    xlabel('Speed sensitivity (kHz.ms/m)')
+    title('Speed sensitivity')
+    subplot(2,2,4)
+    plot(Param.direction(:,1),Param.direction(:,2),'o')
+    xlabel('X axis')
+    ylabel('Y axis')
+    title('Preferred direction')    
+    
 
 end
