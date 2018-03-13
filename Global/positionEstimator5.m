@@ -1,8 +1,8 @@
-function [decodedPosX, decodedPosY, newParameters] = positionEstimator4(trial, Param)
+function [decodedPosX, decodedPosY, newParameters] = positionEstimator5(trial, Param)
     %Parameters    
-    N_iterations = 10;
+    N_iterations = 5;
     speed_std = 0.1 ;
-    speed_std2 = 0.3 ;
+    speed_std2 = 0.5 ;
     t_bin = 20;
     t_planning = 320;
     
@@ -40,7 +40,8 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator4(trial, P
             %We compute counts (observation)
             counts = sum(trial.spikes(:,end-t_bin:end),2);
             %We calculate poisson parameter lambda for each neuron
-            lambda = max(0,Param_iter.baseline(:,1)+Param_iter.direction*Param_iter.particles');            
+            Particles_norm = sqrt(sum(Param_iter.particles.^2,2));
+            lambda = max(0,Param_iter.baseline(:,1)+Param_iter.direction_sensitivity.*Param_iter.direction*(Param_iter.particles./Particles_norm)'+Param_iter.speed_sensitivity(:,1)*Particles_norm');            
             %Weights calculation (P(observation|state) for each particle)
             weights = zeros(1,Param_iter.N_particles);
             for p=1:1:Param_iter.N_particles
@@ -53,18 +54,18 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator4(trial, P
             % !!!!! This return a 300x2 matrix of the same point 300 times.
             % However, should it not be 300 particles whose duplication frequency is determined
             % by the relative weights of Param_iter.particles?? !!!
-            iterationPart = Param_iter.particles;
-            Particles = randsample(Param_iter.,Param_iter.N_particles,1,'Replace',true,'Weights',weights); 
+            PartIdx = randsample(1:length(Param_iter.particles),Param_iter.N_particles,true,weights);
+            Particles = Param_iter.particles(PartIdx,:);
             
             %This plot helps to show whats happening.
-            figure(10)
-            plot(Param_iter.particles(:,1),Param_iter.particles(:,2), 'ro')
-            hold on
-            plot(Particles(:,1),Particles(:,2), 'bo')
-            hold off
-            axis([-1 1 -1 1])
-            pause
-            
+%             figure(10)
+%             plot(Param_iter.particles(:,1),Param_iter.particles(:,2), 'ro')
+%             hold on
+%             plot(Particles(:,1),Particles(:,2), 'bo')
+%             hold off
+%             axis([-1 1 -1 1])
+%             pause(0.1)
+%             
             %We add system noise
             %!!! This should be "noise + spread of particles", but it is
             %currently "noise + one random particle in the cluster" !!!
