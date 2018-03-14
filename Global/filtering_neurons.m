@@ -76,7 +76,7 @@ function filtered_trial = filtering_neurons(trial, type)
         avg_velocity{k} = neural_data{k}.handVel;
     end
     
-    bins = 5; % number of divisions we want
+    bins = 10; % number of divisions we want
     [rate_split, velocity_split] = data_stepping(trial, bins, rate, avg_velocity);
  
     % Output
@@ -158,10 +158,10 @@ function neural_data = getNeuronData(trial)
     spikedens = PSTH(trial, params_PSTH);
 
     %% Hand velocity
-    neural_data = handVelocity(trial, spikedens, baseline_spikedens, numangles, params_baseline);
+    neural_data = handVelocity(trial, spikedens, baseline_spikedens, numangles, params_baseline, params_PSTH);
 end
 
-function neural_data = handVelocity(trial, spikedens, baseline_spikedens, numangles, params)
+function neural_data = handVelocity(trial, spikedens, baseline_spikedens, numangles, params, params_PSTH)
 % This calculates the hand velocity and hand position averaged across all
 % trials for each orientation.
 % Input:
@@ -178,11 +178,13 @@ function neural_data = handVelocity(trial, spikedens, baseline_spikedens, numang
 %                    and hand velocity across all trials for each direction.
     
     % Find the longest handPos for each orientation
+    time_movement = params_PSTH.t_start:1:params_PSTH.t_end;
+    
     for k = 1:numangles
         max_length_pos(k) = -inf; % initialize
         for n = 1:params.n_trials
-            if length(trial(n,k).handPos(1,:)) > max_length_pos(k)
-                max_length_pos(k) = length(trial(n,k).handPos(1,:));
+            if length(trial(n,k).handPos(1,time_movement)) > max_length_pos(k)
+                max_length_pos(k) = length(trial(n,k).handPos(1,time_movement));
             end
         end
     end
@@ -198,12 +200,12 @@ function neural_data = handVelocity(trial, spikedens, baseline_spikedens, numang
         handVel_y = NaN(params.n_trials,max_length_pos(k)-1);
         handVel_z = NaN(params.n_trials,max_length_pos(k)-1);
         for n = 1:params.n_trials
-            current_length = length(trial(n,k).handPos(1,:));
-            handVel = diff(trial(n,k).handPos,1,2); % obtain hand velocity
+            current_length = length(trial(n,k).handPos(1,time_movement));
+            handVel = diff(trial(n,k).handPos(:,time_movement),1,2); % obtain hand velocity
             
-            handPos_x(n,1:current_length) = trial(n,k).handPos(1,:);
-            handPos_y(n,1:current_length) = trial(n,k).handPos(2,:);
-            handPos_z(n,1:current_length) = trial(n,k).handPos(3,:);
+            handPos_x(n,1:current_length) = trial(n,k).handPos(1,time_movement);
+            handPos_y(n,1:current_length) = trial(n,k).handPos(2,time_movement);
+            handPos_z(n,1:current_length) = trial(n,k).handPos(3,time_movement);
             
             handVel_x(n,1:current_length-1) = handVel(1,:);
             handVel_y(n,1:current_length-1) = handVel(2,:);

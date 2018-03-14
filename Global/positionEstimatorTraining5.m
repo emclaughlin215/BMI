@@ -18,7 +18,7 @@ function [Param] = positionEstimatorTraining5(trial_train)
     end
     
     %Particle filtering parameters
-    N_particles = 1000;
+    N_particles = 800;
     
     %Returned values initialization
     direction = zeros(I,2);
@@ -78,7 +78,24 @@ function [Param] = positionEstimatorTraining5(trial_train)
     plot(Param.direction(:,1),Param.direction(:,2),'o')
     xlabel('X axis')
     ylabel('Y axis')
-    title('Preferred direction')    
+    title('Preferred direction') 
     
+    neurons_id = 11:13;
+    f4 = figure(4);
+    f4.Name = 'Neuron fitting';
+    angle = -180:1:180;
+    speed = 0:0.01:0.9;
+    for i=neurons_id
+        subplot(length(neurons_id),2,2*(i-neurons_id(1))+1)        
+        plot(Cloud{i}(1,:)*180/pi,Cloud{i}(3,:),'o',angle,pref_fit{i}(angle*pi/180))
+        xlabel('Angle (°)')
+        ylabel('Rate (kHz)')
+        title(num2str(i))
+        subplot(length(neurons_id),2,2*(i-neurons_id(1))+2)
+        plot(Cloud{i}(2,:),Cloud{i}(3,:),'o',speed,speed_sensitivity(i,1)*speed)
+        xlabel('Speed norm (m/ms)')
+        ylabel('Rate (kHz)')
+        title(num2str(i))        
+    end    
 
 end
