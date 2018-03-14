@@ -42,7 +42,8 @@ function [Param] = positionEstimatorTraining5(trial_train)
         pref_fit{i} = fit(Cloud{i}(1,:)',Cloud{i}(3,:)',ft,options);
         direction(i,:) = [cos(-pref_fit{i}.b),sin(-pref_fit{i}.b)];
         direction_sensitivity(i) = exp(pref_fit{i}.a);
-        speed_sensitivity(i,1) = pinv(Cloud{i}(2,:)')*Cloud{i}(3,:)';
+        %speed_sensitivity(i,1) = pinv(Cloud{i}(2,:)')*Cloud{i}(3,:)';
+        speed_sensitivity(i,1) = pinv(Cloud{i}(2,:)')*(Cloud{i}(3,:)'-pref_fit{i}(Cloud{i}(1,:)'));
     end
     
     %Retturned parameters
@@ -90,12 +91,12 @@ function [Param] = positionEstimatorTraining5(trial_train)
         plot(Cloud{i}(1,:)*180/pi,Cloud{i}(3,:),'o',angle,pref_fit{i}(angle*pi/180))
         xlabel('Angle (°)')
         ylabel('Rate (kHz)')
-        title(num2str(i))
+        title(strcat('Neuron ',num2str(i)))
         subplot(length(neurons_id),2,2*(i-neurons_id(1))+2)
         plot(Cloud{i}(2,:),Cloud{i}(3,:),'o',speed,speed_sensitivity(i,1)*speed)
         xlabel('Speed norm (m/ms)')
         ylabel('Rate (kHz)')
-        title(num2str(i))        
+        title(strcat('Neuron ',num2str(i)))       
     end    
 
 end

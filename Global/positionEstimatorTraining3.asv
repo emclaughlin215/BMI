@@ -68,18 +68,13 @@ function [Param] = positionEstimatorTraining3(trial_train)
     f4 = figure(4);
     f4.Name = 'Neuron fitting';
     vx=-0.9:0.01:0.9;
-    vy=-0.9:0.01:0.9;
-    [meshVx,meshVy] = meshgrid(vx,vy);
+    vy=-0.9:0.01:0.9;   
     for i=neurons_id
-        subplot(length(neurons_id),1,i-neurons_id(1)+1)        
-        plot3(Cloud{i}(1,:),Cloud{i}(2,:),Cloud{i}(3,:),'o')
-        hold on
-        meshFit = pref_fit{i}(meshVx,meshVy);
-        surf(meshVx,meshVy,meshFit);
+        subplot(length(neurons_id),1,i)        
+        plot3(Cloud{i}(1,:),Cloud{i}(2,:),Cloud{i}(3,:),'o',vx,vy,pref_fit{i}(vx,vy))
         xlabel('X speed (m/ms)')
-        ylabel('Y speed (m/ms)')
-        zlabel('Rates (kHz)')
-        title(strcat('Neuron ',num2str(i)))   
+        ylabel('Y ')
+        title(num2str(i))   
     end    
 
 end
