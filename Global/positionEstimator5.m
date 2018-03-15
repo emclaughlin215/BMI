@@ -1,4 +1,4 @@
-function [decodedPosX, decodedPosY, newParameters] = positionEstimator5(trial, Param)
+function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Param)
     %Parameters    
     N_iterations = 15;
     speed_std = 0.05 ;

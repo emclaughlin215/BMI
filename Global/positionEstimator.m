@@ -1,11 +1,15 @@
 function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Param)
     %Parameters    
-
-    N_iterations = 1;
-    speed_std = 0.01 ;
-    speed_std2 = 0.05 ;
+    N_iterations = 15;
+    speed_std = 0.05 ;
+    speed_std2 = 0.3 ;
     t_bin = 20;
     t_planning = 320;
+    
+    if size(trial.spikes,2)<Param.previous_length
+       Param.isifirst = 1;
+       Param.decodedPos = [0,0];
+    end
     
     %Neuron filtering
     N = size(trial,1);
@@ -41,8 +45,8 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
             %We compute counts (observation)
             counts = sum(trial.spikes(:,end-t_bin:end),2);
             %We calculate poisson parameter lambda for each neuron
-            lambda = exp(Param_iter.baseline+Param_iter.direction*Param_iter.particles'+Param_iter.speed_sensitivity*sqrt(Param_iter.particles(:,1).^2+Param_iter.particles(:,2).^2)');
-            
+            Particles_norm = sqrt(sum(Param_iter.particles.^2,2));
+            lambda = max(0,Param_iter.baseline(:,1)+Param_iter.direction_sensitivity.*Param_iter.direction*(Param_iter.particles./Particles_norm)'+Param_iter.speed_sensitivity(:,1)*Particles_norm');            
             %Weights calculation (P(observation|state) for each particle)
             weights = zeros(1,Param_iter.N_particles);
             for p=1:1:Param_iter.N_particles
@@ -51,9 +55,18 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
             %We resample particles according to the weights: "survival of
             %the fittest"
             weights = weights/sum(weights);
-            
             PartIdx = randsample(1:length(Param_iter.particles),Param_iter.N_particles,true,weights);
             Particles = Param_iter.particles(PartIdx,:);
+            
+            %This plot helps to show whats happening.
+            f3 = figure(3);
+            f3.Name = 'Speed particles population';
+            plot(Param_iter.particles(:,1),Param_iter.particles(:,2), 'ro')
+            hold on
+            plot(Particles(:,1),Particles(:,2), 'bo')
+            hold off
+            axis([-1 1 -1 1])
+            pause(0.1)
             
             %We add system noise
             Param_iter.particles = randn(Param_iter.N_particles,2)*speed_std + Particles;            
@@ -69,6 +82,7 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
         newParameters = Param_iter;
         newParameters.particles = randn(Param.N_particles,2)*speed_std2 + Particles;
         newParameters.decodedPos = [decodedPosX,decodedPosY];
+        newParameters.previous_length = size(trial.spikes,2);
     end
     
 end
