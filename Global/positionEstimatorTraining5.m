@@ -56,6 +56,7 @@ function [Param] = positionEstimatorTraining5(trial_train)
     Param.isfirst = 1;
     Param.N_particles  =N_particles;
     Param.bool_neurons = trial(1).bool_neurons(:,1);
+    Param.previous_length = 0;
     
     %Plot
     f2 = figure(2);

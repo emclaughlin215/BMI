@@ -6,10 +6,10 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator5(trial, P
     t_bin = 20;
     t_planning = 320;
     
-    if size(trial.spikes,2)<Param.previous_length
-       Param.isifirst = 1;
-       Param.decodedPos = [0,0];
-    end
+%     if size(trial.spikes,2)<Param.previous_length
+%        Param.isifrst = 1;
+%        Param.decodedPos = [0,0];
+%     end
     
     %Neuron filtering
     N = size(trial,1);
