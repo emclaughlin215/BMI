@@ -9,7 +9,8 @@ function filtered_trial = filtering_neurons(trial, type)
 % Output:
 %       filtered_trial: A structure that contains baseline, rate and speed (divided into bins) for each orientation. 
 
-    neural_data = getNeuronData(trial);
+    bins = 10; % number of divisions we want
+    neural_data = getNeuronData(trial, bins);
     baseline = neural_data{1}.baseline;
     
     num_angles = size(trial,2); % number angles
@@ -76,7 +77,6 @@ function filtered_trial = filtering_neurons(trial, type)
         avg_velocity{k} = neural_data{k}.handVel;
     end
     
-    bins = 10; % number of divisions we want
     [rate_split, velocity_split] = data_stepping(trial, bins, rate, avg_velocity);
  
     % Output
@@ -124,11 +124,12 @@ function [rate_split, velocity_split] = data_stepping(trial, bins, rate, avg_vel
     end
 end
 
-function neural_data = getNeuronData(trial)
+function neural_data = getNeuronData(trial,bins)
 % Calculates hand velocity, hand position, spikes without baseline, 
 % PSTH and baseline for every trial in each direction.
 % Input:
 %       trial: A structure that contains the data (100 trials across 8 angles)
+%       bins: Number of divisions of data.
 % Output:
 %       neural_data: A structure that contains the PSTH, hand position
 %                    and hand velocity for each trial for each direction.
@@ -158,10 +159,10 @@ function neural_data = getNeuronData(trial)
     spikedens = PSTH(trial, params_PSTH);
 
     %% Hand velocity
-    neural_data = handVelocity(trial, spikedens, baseline_spikedens, numangles, params_baseline, params_PSTH);
+    neural_data = handVelocity(trial, spikedens, baseline_spikedens, numangles, params_baseline, params_PSTH, bins);
 end
 
-function neural_data = handVelocity(trial, spikedens, baseline_spikedens, numangles, params, params_PSTH)
+function neural_data = handVelocity(trial, spikedens, baseline_spikedens, numangles, params, params_PSTH, bins)
 % This calculates the hand velocity and hand position averaged across all
 % trials for each orientation.
 % Input:
@@ -173,12 +174,20 @@ function neural_data = handVelocity(trial, spikedens, baseline_spikedens, numang
 %       numangles: A number that specifies the number of directions.
 %       params: A structure containing the baseline parameters: number of trials,
 %               number of units, start and end time, and the direction.
+%       bins: Number of divisions of data.
 % Output:
 %       neural_data: A structure that contains the PSTH, baseline, hand position
 %                    and hand velocity across all trials for each direction.
     
     % Find the longest handPos for each orientation
     time_movement = params_PSTH.t_start:1:params_PSTH.t_end;
+    
+    % Implement delay by taking the next bin_count ms of velocity
+    T = time_movement(end)-time_movement(1); % time
+    bin_count = floor(T/bins);
+    time_begin = time_movement(1) + bin_count;
+    time_end = time_movement(end) + bin_count;
+    time_movement = time_begin:time_end;
     
     for k = 1:numangles
         max_length_pos(k) = -inf; % initialize
