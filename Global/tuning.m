@@ -26,7 +26,7 @@ function [preference, standard_deviation, vector] = tuning(trial, i_id, Plot)
     for i = i_id
         for n = 1:1:N
             for k = 1:1:K
-                preference(i,k) = preference(i,k)+sum(trial(n,k).spikes(i,:))/(size(trial(n,k).spikes(i,:),2)*N);
+                preference(i,k) = preference(i,k)+sum(trial(n,k).rate(i,:))/(size(trial(n,k).rate(i,:),2)*N);
             end
         end
     end
@@ -34,7 +34,7 @@ function [preference, standard_deviation, vector] = tuning(trial, i_id, Plot)
     for i = i_id
         for n = 1:1:N
             for k = 1:1:K
-                standard_deviation(i,k) = standard_deviation(i,k)+1/N*(sum(trial(n,k).spikes(i,:))/(size(trial(n,k).spikes(i,:),2))-preference(i,k))^2;
+                standard_deviation(i,k) = standard_deviation(i,k)+1/N*(sum(trial(n,k).rate(i,:))/(size(trial(n,k).rate(i,:),2))-preference(i,k))^2;
             end
         end
     end

@@ -1,7 +1,7 @@
 function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Param)
     %Parameters    
     N_iterations = 15;
-    speed_std = 0.05 ;
+    speed_std = 0.02 ;
     speed_std2 = 0.3 ;
     t_bin = 20;
     t_planning = 320;
@@ -32,15 +32,22 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
         planned_speed = first_speed_norm*rates'*(Param.direction(:,:)./directions_norm);
         
         %The first step is planification, there is no actual movement
-        decodedPosX = 0;
-        decodedPosY = 0;
+        decodedPosX = trial.startHandPos(1,1);
+        decodedPosY = trial.startHandPos(2,1);
+        
         newParameters = Param;
+        newParameters.Speed_estimate_prev = planned_speed;
         newParameters.particles = planned_speed + randn(Param.N_particles,2)*speed_std2;
         %We move on to next steps with movement
         newParameters.isfirst = 0;
     else
         %We create a dummy Param structure for the iterations 
         Param_iter = Param;
+        
+        %We increment the estimated position
+        decodedPosX = Param_iter.decodedPos(1,1) + Param_iter.Speed_estimate_prev(1,1)*t_bin;
+        decodedPosY = Param_iter.decodedPos(1,2) + Param_iter.Speed_estimate_prev(1,2)*t_bin;
+        
         for iterations=1:1:N_iterations
             %We compute counts (observation)
             counts = sum(trial.spikes(:,end-t_bin:end),2);
@@ -61,10 +68,9 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
             %This plot helps to show whats happening.
             f3 = figure(3);
             f3.Name = 'Speed particles population';
-            plot(Param_iter.particles(:,1),Param_iter.particles(:,2), 'ro')
-            hold on
-            plot(Particles(:,1),Particles(:,2), 'bo')
-            hold off
+            if iterations == N_iterations
+                plot(Param_iter.particles(:,1),Param_iter.particles(:,2), 'ro')
+            end
             axis([-1 1 -1 1])
             pause(0.1)
             
@@ -73,13 +79,12 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
         end
         %After all the iterations, the particle cloud has converged towards
         %the "true" state (i.e. true speed)
-        Speed_estimate = mean(Particles);
-        %We increment the estimated position
-        decodedPosX = Param_iter.decodedPos(1,1) + Speed_estimate(1,1)*t_bin;
-        decodedPosY = Param_iter.decodedPos(1,2) + Speed_estimate(1,2)*t_bin;
+        Speed_estimate_prev = mean(Particles);
+        
         %We store parameters for new iteration while adding a -slightly
         %bigger- system noise
         newParameters = Param_iter;
+        newParameters.Speed_estimate_prev = Speed_estimate_prev;
         newParameters.particles = randn(Param.N_particles,2)*speed_std2 + Particles;
         newParameters.decodedPos = [decodedPosX,decodedPosY];
         newParameters.previous_length = size(trial.spikes,2);
