@@ -30,7 +30,7 @@ axis square
 grid
 
 % Train Model
-modelParameters = positionEstimatorTraining5(trainingData);
+modelParameters = positionEstimatorTraining(trainingData);
 decodedPosX = 0;
 decodedPosY = 0;
 
@@ -52,7 +52,7 @@ for tr=1:size(testData,1)
             past_current_trial.startHandPos = testData(tr,direc).handPos(1:2,1); 
             
             
-            [decodedPosX, decodedPosY, newParameters] = positionEstimator5(past_current_trial, modelParameters);
+            [decodedPosX, decodedPosY, newParameters] = positionEstimator(past_current_trial, modelParameters);
             modelParameters = newParameters;
 
             
