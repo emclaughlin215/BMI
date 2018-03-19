@@ -9,7 +9,7 @@ function filtered_trial = filtering_neurons(trial, type)
 % Output:
 %       filtered_trial: A structure that contains baseline, rate and speed (divided into bins) for each orientation. 
 
-    bins = 10; % number of divisions we want
+    bins = 20; % number of divisions we want
     neural_data = getNeuronData(trial, bins);
     baseline = neural_data{1}.baseline;
     

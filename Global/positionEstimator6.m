@@ -37,8 +37,8 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator6(trial, P
         
         % Split the trial(n,k).spikes data into smaller bins
         bins = 10; % Modify
-           for k = 1:num_angles
-               for n = 1:num_trials
+           for k = 1:K
+               for n = 1:N
                T = size(trial(n,k).spikes,2); % time
                bin_count = floor(T/bins);
                 for num_bin = 1:bins
@@ -96,7 +96,7 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator6(trial, P
         end
         
         % Integrate the speed_estimate across all bins
-        Speed_estimate_integration = sum(Speed_estimate * length(bin)/bins;
+        Speed_estimate_integration = sum(Speed_estimate * length(bin))/bins;
 
         %We increment the estimated position
         decodedPosX = Param_iter.decodedPos(1,1) + Speed_estimate_integration(1,1)*t_bin;
