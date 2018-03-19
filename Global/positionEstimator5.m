@@ -1,4 +1,4 @@
-function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Param)
+function [decodedPosX, decodedPosY, newParameters] = positionEstimator5(trial, Param)
     %Parameters    
     N_iterations = 15;
     speed_std = 0.02 ;
@@ -7,7 +7,7 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator(trial, Pa
     t_planning = 320;
     
     if size(trial.spikes,2)<Param.previous_length
-       Param.isifirst = 1;
+       Param.isfirst = 1;
        Param.decodedPos = [0,0];
     end
     
