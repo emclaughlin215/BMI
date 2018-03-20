@@ -51,6 +51,7 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator7(trial, P
         directions = Param.NET(sum(trial.spikes,2)/size(trial.spikes,2));
         [~, idx] = max(directions);
         Param.prefdir = angles(idx);
+         newParameters.previous_length = size(trial.spikes,2);
     else
         %We create a dummy Param structure for the iterations 
         Param_iter = Param;
