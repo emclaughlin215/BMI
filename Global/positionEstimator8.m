@@ -15,7 +15,7 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator8(trial, P
     
     if size(trial.spikes,2)<Param.previous_length
        Param.isfirst = 1;
-       Param.decodedPos = [0,0];
+       Param.decodedPos = trial.startHandPos;
     end
     
     %Neuron filtering
@@ -45,16 +45,14 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator8(trial, P
         newParameters.particles = atan2(planned_speed(1,2),planned_speed(1,1)) + randn(Param.N_particles,1)*angle_std2;
         %We move on to next steps with movement
         newParameters.isfirst = 0;
-<<<<<<< HEAD
         newParameters.previous_length = size(trial.spikes,2);
-=======
-        
+        newParameters.decodedPos = [decodedPosX,decodedPosY];
         % Calculate the prefered direction
         angles = [30, 70, 110, 150, 190, 230, 310, 350]/180*pi;
         directions = Param.NET(sum(trial.spikes,2)/size(trial.spikes,2));
         [~, idx] = max(directions);
-        Param.prefdir = angles(idx);
->>>>>>> 1bd5613c9309242ce79bb9abd3a4b3a9c8b563a0
+        newParameters.prefdir = angles(idx);
+
     else
         %We create a dummy Param structure for the iterations 
         Param_iter = Param;
@@ -67,7 +65,7 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator8(trial, P
             %We compute counts (observation)
             counts = sum(trial.spikes(:,end-t_bin:end),2);
             %We calculate poisson parameter lambda for each neuron
-            lambda = max(0.0001,Param_iter.baseline(:,1)+Param_iter.direction_sensitivity.*Param_iter.direction*[cos(Param_iter.particles),sin(Param_iter.particles)]');            
+            lambda = max(0.000001,Param_iter.baseline(:,1)+Param_iter.direction_sensitivity.*Param_iter.direction*[cos(Param_iter.particles),sin(Param_iter.particles)]');            
             %Weights calculation (P(observation|state) for each particle)
             weights = zeros(1,Param_iter.N_particles);
             for p=1:1:Param_iter.N_particles
@@ -80,13 +78,13 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator8(trial, P
             Particles = Param_iter.particles(PartIdx,:);
             
             %This plot helps to show whats happening.
-%             f3 = figure(3);
-%             f3.Name = 'Speed particles population';
-%             if iterations == N_iterations
-%                 plot(cos(Param_iter.particles),sin(Param_iter.particles), 'ro')
-%             end
-%             axis([-1 1 -1 1])
-%             pause(0.1)
+            f3 = figure(3);
+            f3.Name = 'Speed particles population';
+            if iterations == N_iterations
+                plot(cos(Param_iter.particles),sin(Param_iter.particles), 'ro')
+            end
+            axis([-1 1 -1 1])
+            pause(0.1)
             
             %We add system noise
             Param_iter.particles = randn(Param_iter.N_particles,1)*angle_std + Particles;            
@@ -94,19 +92,13 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator8(trial, P
         %After all the iterations, the particle cloud has converged towards
         %the "true" state (i.e. true speed)
         Speed_estimate_prev = speed(1,(size(trial.spikes,2)-300)/t_bin)*[cos(mean(Particles)),sin(mean(Particles))];
-<<<<<<< HEAD
-=======
-        newSpeed = correctingSpeed(preferred_direction, x, Speed_estimate_prev);
->>>>>>> 1bd5613c9309242ce79bb9abd3a4b3a9c8b563a0
+        newSpeed = correctingSpeed(Param_iter, Param_iter.decodedPos, Speed_estimate_prev);
+
         
         %We store parameters for new iteration while adding a -slightly
         %bigger- system noise
         newParameters = Param_iter;
-<<<<<<< HEAD
-        newParameters.Speed_estimate_prev = Speed_estimate_prev;
-=======
         newParameters.Speed_estimate_prev = newSpeed;
->>>>>>> 1bd5613c9309242ce79bb9abd3a4b3a9c8b563a0
         newParameters.particles = randn(Param.N_particles,1)*angle_std2 + Particles;
         newParameters.decodedPos = [decodedPosX,decodedPosY];
         newParameters.previous_length = size(trial.spikes,2);
