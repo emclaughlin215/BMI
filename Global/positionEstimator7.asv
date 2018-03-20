@@ -13,6 +13,8 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator7(trial, P
     time = t_planning:t_bin:t_end;
     speed = normpdf(time,t_vmu,speed_std)*speed_ratio; 
     
+    
+    
     if size(trial.spikes,2)<Param.previous_length
        Param.isfirst = 1;
        Param.decodedPos = [0,0];
@@ -45,7 +47,6 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator7(trial, P
         newParameters.particles = atan2(planned_speed(1,2),planned_speed(1,1)) + randn(Param.N_particles,1)*angle_std2;
         %We move on to next steps with movement
         newParameters.isfirst = 0;
-        newParameters.previous_length = size(trial.spikes,2);
     else
         %We create a dummy Param structure for the iterations 
         Param_iter = Param;

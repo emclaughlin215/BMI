@@ -47,8 +47,8 @@ for tr=1:size(testData,1)
             past_current_trial.startHandPos = testData(tr,direc).handPos(1:2,1); 
             
             
-            [decodedPosX, decodedPosY] = positionEstimator7(past_current_trial, modelParameters);
-           
+            [decodedPosX, decodedPosY, newParameters] = positionEstimator7(past_current_trial, modelParameters);
+            modelParameters = newParameters;
             
             decodedPos = [decodedPosX; decodedPosY];
             decodedHandPos = [decodedHandPos decodedPos];
@@ -60,7 +60,7 @@ for tr=1:size(testData,1)
         figure(1)
         hold on
         plot(decodedHandPos(1,:),decodedHandPos(2,:), 'r');
-        %plot(testData(tr,direc).handPos(1,times),testData(tr,direc).handPos(2,times),'b')
+        plot(testData(tr,direc).handPos(1,times),testData(tr,direc).handPos(2,times),'b')
     end
 end
 
