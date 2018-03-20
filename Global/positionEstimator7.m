@@ -1,15 +1,17 @@
-function [decodedPosX, decodedPosY, newParameters] = positionEstimator5(trial, Param)
+function [decodedPosX, decodedPosY, newParameters] = positionEstimator7(trial, Param)
     %Parameters    
-    N_iterations = 15;
-    speed_std = 0.02 ;
-    speed_std2 = 0.3 ;
+    N_iterations = 10;
+    angle_std = 1*pi/180 ;
+    angle_std2 = 10*pi/180 ;
     t_bin = 20;
     t_planning = 320;
-    t_end;
+    t_end = 1000;
+    t_vmu = 410;
+    speed_std = 100;
     speed_ratio = 103.9008/0.9993;
     
     time = t_planning:t_bin:t_end;
-    speed = normpdf(time,(t_end+t_planing)/2,30)*speed_ratio;
+    speed = normpdf(time,t_vmu,speed_std)*speed_ratio; 
     
     if size(trial.spikes,2)<Param.previous_length
        Param.isfirst = 1;
@@ -27,13 +29,12 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator5(trial, P
     
     if Param.isfirst
         %For first estimate we use poplation vector as the expected value
-        %for a Gaussian repartition of particles      
-        
+        %for a Gaussian repartition of particles
+                
         %We obtain the rates and normalized directions, and make a weighted
         %sum of the latter 
         rates = sum(trial.spikes(:,:),2)/t_planning-Param.baseline;
-        directions_norm = sqrt(Param.direction(:,1).^2+Param.direction(:,2).^2);
-        planned_speed = speed(1,1)*rates'*(Param.direction(:,:)./directions_norm);
+        planned_speed = speed(1,1)*rates'*Param.direction(:,:);
         
         %The first step is planification, there is no actual movement
         decodedPosX = trial.startHandPos(1,1);
@@ -41,7 +42,7 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator5(trial, P
         
         newParameters = Param;
         newParameters.Speed_estimate_prev = planned_speed;
-        newParameters.particles = planned_speed + randn(Param.N_particles,2)*speed_std2;
+        newParameters.particles = atan2(planned_speed(1,2),planned_speed(1,1)) + randn(Param.N_particles,1)*angle_std2;
         %We move on to next steps with movement
         newParameters.isfirst = 0;
     else
@@ -56,8 +57,7 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator5(trial, P
             %We compute counts (observation)
             counts = sum(trial.spikes(:,end-t_bin:end),2);
             %We calculate poisson parameter lambda for each neuron
-            Particles_norm = sqrt(sum(Param_iter.particles.^2,2));
-            lambda = max(0,Param_iter.baseline(:,1)+Param_iter.direction_sensitivity.*Param_iter.direction*(Param_iter.particles./Particles_norm)'+Param_iter.speed_sensitivity(:,1)*Particles_norm');            
+            lambda = max(0.0001,Param_iter.baseline(:,1)+Param_iter.direction_sensitivity.*Param_iter.direction*[cos(Param_iter.particles),sin(Param_iter.particles)]');            
             %Weights calculation (P(observation|state) for each particle)
             weights = zeros(1,Param_iter.N_particles);
             for p=1:1:Param_iter.N_particles
@@ -70,26 +70,26 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator5(trial, P
             Particles = Param_iter.particles(PartIdx,:);
             
             %This plot helps to show whats happening.
-            f3 = figure(3);
-            f3.Name = 'Speed particles population';
-            if iterations == N_iterations
-                plot(Param_iter.particles(:,1),Param_iter.particles(:,2), 'ro')
-            end
-            axis([-1 1 -1 1])
-            pause(0.1)
+%             f3 = figure(3);
+%             f3.Name = 'Speed particles population';
+%             if iterations == N_iterations
+%                 plot(cos(Param_iter.particles),sin(Param_iter.particles), 'ro')
+%             end
+%             axis([-1 1 -1 1])
+%             pause(0.1)
             
             %We add system noise
-            Param_iter.particles = randn(Param_iter.N_particles,2)*speed_std + Particles;            
+            Param_iter.particles = randn(Param_iter.N_particles,1)*angle_std + Particles;            
         end
         %After all the iterations, the particle cloud has converged towards
         %the "true" state (i.e. true speed)
-        Speed_estimate_prev = mean(Particles);
+        Speed_estimate_prev = speed(1,(size(trial.spikes,2)-300)/t_bin)*[cos(mean(Particles)),sin(mean(Particles))];
         
         %We store parameters for new iteration while adding a -slightly
         %bigger- system noise
         newParameters = Param_iter;
         newParameters.Speed_estimate_prev = Speed_estimate_prev;
-        newParameters.particles = randn(Param.N_particles,2)*speed_std2 + Particles;
+        newParameters.particles = randn(Param.N_particles,1)*angle_std2 + Particles;
         newParameters.decodedPos = [decodedPosX,decodedPosY];
         newParameters.previous_length = size(trial.spikes,2);
     end

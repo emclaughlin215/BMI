@@ -23,38 +23,32 @@ fprintf('Testing the continuous position estimator...')
 meanSqError = 0;
 n_predictions = 0;  
 
-f1 = figure(1);
-f1.Name = 'Trajectory prediction';
+figure(1)
 hold on
 axis square
 grid
 
 % Train Model
-modelParameters = positionEstimatorTraining5(trainingData);
-decodedPosX = 0;
-decodedPosY = 0;
+modelParameters = positionEstimatorTraining7(trainingData);
 
 for tr=1:size(testData,1)
     display(['Decoding block ',num2str(tr),' out of ',num2str(size(testData,1))]);
     pause(0.001)
     for direc=randperm(8) 
         decodedHandPos = [];
-%         modelParameters.decodedPos = [0,0];
-%         modelParameters.isfirst = 1;
 
         times=320:20:size(testData(tr,direc).spikes,2);
         
         for t=times
             past_current_trial.trialId = testData(tr,direc).trialId;
             past_current_trial.spikes = testData(tr,direc).spikes(:,1:t); 
-            past_current_trial.decodedHandPos = decodedHandPos; 
+            past_current_trial.decodedHandPos = decodedHandPos;
 
             past_current_trial.startHandPos = testData(tr,direc).handPos(1:2,1); 
             
             
-            [decodedPosX, decodedPosY, newParameters] = positionEstimator4(past_current_trial, modelParameters);
-            modelParameters = newParameters;
-
+            [decodedPosX, decodedPosY] = positionEstimator7(past_current_trial, modelParameters);
+           
             
             decodedPos = [decodedPosX; decodedPosY];
             decodedHandPos = [decodedHandPos decodedPos];
@@ -66,7 +60,7 @@ for tr=1:size(testData,1)
         figure(1)
         hold on
         plot(decodedHandPos(1,:),decodedHandPos(2,:), 'r');
-        plot(testData(tr,direc).handPos(1,times),testData(tr,direc).handPos(2,times),'b')
+        %plot(testData(tr,direc).handPos(1,times),testData(tr,direc).handPos(2,times),'b')
     end
 end
 
