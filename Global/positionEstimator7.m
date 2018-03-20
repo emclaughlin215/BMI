@@ -45,7 +45,12 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator7(trial, P
         newParameters.particles = atan2(planned_speed(1,2),planned_speed(1,1)) + randn(Param.N_particles,1)*angle_std2;
         %We move on to next steps with movement
         newParameters.isfirst = 0;
-        newParameters.previous_length = size(trial.spikes,2);
+        
+        % Calculate the prefered direction
+        angles = [30, 70, 110, 150, 190, 230, 310, 350]/180*pi;
+        directions = Param.NET(sum(trial.spikes,2)/size(trial.spikes,2));
+        [~, idx] = max(directions);
+        Param.prefdir = angles(idx);
     else
         %We create a dummy Param structure for the iterations 
         Param_iter = Param;
@@ -85,11 +90,12 @@ function [decodedPosX, decodedPosY, newParameters] = positionEstimator7(trial, P
         %After all the iterations, the particle cloud has converged towards
         %the "true" state (i.e. true speed)
         Speed_estimate_prev = speed(1,(size(trial.spikes,2)-300)/t_bin)*[cos(mean(Particles)),sin(mean(Particles))];
+        newSpeed = correctingSpeed(preferred_direction, x, Speed_estimate_prev);
         
         %We store parameters for new iteration while adding a -slightly
         %bigger- system noise
         newParameters = Param_iter;
-        newParameters.Speed_estimate_prev = Speed_estimate_prev;
+        newParameters.Speed_estimate_prev = newSpeed;
         newParameters.particles = randn(Param.N_particles,1)*angle_std2 + Particles;
         newParameters.decodedPos = [decodedPosX,decodedPosY];
         newParameters.previous_length = size(trial.spikes,2);
