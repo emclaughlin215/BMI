@@ -10,6 +10,7 @@ function newSpeed = correctingSpeed(Param, x, v)
 %   newSpeed: A vector with the corrected velocity.
 
     preferred_direction = [cos(Param.prefdir); sin(Param.prefdir)];
+    pref_dir_ortho = [-sin(Param.prefdir),cos(Param.prefdir)];
 %     preferred_direction = [cos(degtorad(120)), sin(degtorad(120))];
 %     x = [-0.10 0.05];
 %     v = [-0.3 0.3];
@@ -18,7 +19,7 @@ function newSpeed = correctingSpeed(Param, x, v)
     k_v = 0.01; % control gain: importance to difference in velocity
     k_x = 0.05; % control gain: importance to difference in position
           
-    diff_position = -x*preferred_direction*[-sin(Param.prefdir);cos(Param.prefdir)]; % Stronger effect the further away you are
+    diff_position = -x*pref_dir_ortho*[-sin(Param.prefdir);cos(Param.prefdir)]; % Stronger effect the further away you are
     error = preferred_direction - v; % between desired and actual velocity
     newSpeed = v + k_v * error + k_x * diff_position;
     
