@@ -91,7 +91,7 @@ function [Param] = positionEstimatorTraining(trial_train)
     for i=neurons_id
         subplot(length(neurons_id),2,2*(i-neurons_id(1))+1)        
         plot(Cloud{i}(1,:)*180/pi,Cloud{i}(3,:),'o',angle,pref_fit{i}(angle*pi/180))
-        xlabel('Angle (°)')
+        xlabel('Angle (Â°)')
         ylabel('Rate (kHz)')
         title(strcat('Neuron ',num2str(i)))
         subplot(length(neurons_id),2,2*(i-neurons_id(1))+2)
